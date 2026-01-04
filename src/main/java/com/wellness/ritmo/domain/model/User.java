@@ -3,15 +3,17 @@ package com.wellness.ritmo.domain.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
 @Table(
-        name = "user",
-        indexes = {
-                @Index(name = "idx_user_username", columnList = "username"),
-                @Index(name = "idx_user_email", columnList = "email")
-        }
+        name = "users"
+//        indexes = {
+//                @Index(name = "idx_user_username", columnList = "username"),
+//                @Index(name = "idx_user_email", columnList = "email")
+//        }
 )
 public class User {
 
@@ -28,8 +30,8 @@ public class User {
     @Column(name = "email", nullable = false, length = 200)
     private String email;
 
-    @Column(name = "is_user_on", nullable = false)
-    private Boolean isUserOn = true;
+    @Column(name = "active", nullable = false)
+    private Boolean active = true;
 
     @Column(name = "created_on", nullable = false, updatable = false)
     private LocalDateTime createdOn;
@@ -37,9 +39,6 @@ public class User {
     @Column(name = "updated_on")
     private LocalDateTime updatedOn;
 
-    /**
-     * Lado inverso do relacionamento 1–1
-     */
     @OneToOne(
             mappedBy = "user",
             cascade = CascadeType.ALL,
@@ -47,5 +46,13 @@ public class User {
             optional = false
     )
     private UserProfile profile;
+
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private List<UserAvailability> availabilities = new ArrayList<>();
+
 
 }

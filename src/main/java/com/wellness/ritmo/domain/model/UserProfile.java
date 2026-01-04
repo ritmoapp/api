@@ -38,9 +38,6 @@ public class UserProfile {
     @Column(name = "conditioning_lvl", length = 30)
     private ConditioningLevel conditioningLevel;
 
-    /**
-     * Ritmo médio (ex: min/km) — pode ser Double ou Duration,
-     */
     @Column(name = "pace_avg_seg")
     private Integer paceAvgSeg;
 }
