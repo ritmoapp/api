@@ -1,17 +1,28 @@
 package com.wellness.ritmo.domain.model;
 
+import com.wellness.ritmo.domain.model.listener.UserProfileListener;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Table(name="user_profile")
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@Table(name = "user_profile")
+@EntityListeners(UserProfileListener.class)
 public class UserProfile {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Relação 1–1 com User
-     */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",
@@ -26,7 +37,7 @@ public class UserProfile {
     private Gender gender;
 
     @Column(name = "birth_date")
-    private Integer birth_date;
+    private LocalDate birthDate;
 
     @Column(name = "height_cm")
     private Integer heightCm;
@@ -40,4 +51,15 @@ public class UserProfile {
 
     @Column(name = "pace_avg_seg")
     private Integer paceAvgSeg;
+
+    @Column(name = "weekly_mileage_km")
+    private Double weeklyMileageKm;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PreUpdate
+    private void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

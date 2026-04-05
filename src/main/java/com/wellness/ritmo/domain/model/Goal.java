@@ -1,10 +1,18 @@
 package com.wellness.ritmo.domain.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(
         name = "goals",
@@ -18,7 +26,6 @@ public class Goal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Owning side
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",
@@ -31,24 +38,39 @@ public class Goal {
     @Column(name = "goal_type", nullable = false, length = 50)
     private GoalType goalType;
 
-    @Column(name = "distance_km")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private GoalStatus status = GoalStatus.OPEN;
+
+    @Column(name = "distance_km", precision = 6, scale = 3)
     private BigDecimal distanceKm;
 
-    // target time in seconds
     @Column(name = "target_time_sec")
     private Integer targetTimeSec;
 
-    // pace in seconds per km
     @Column(name = "pace_target_sec")
     private Integer paceTargetSec;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "race_target_id")
+    private RaceTarget raceTarget;
+
+    @Column(name = "weekly_frequency")
+    private Integer weeklyFrequency;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @PrePersist
     private void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
 
-    // getters/setters
+    @PreUpdate
+    private void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
