@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/users/{userId}/activities")
+@RequestMapping("/{userId}/activities")
 @RequiredArgsConstructor
 @Tag(name = "Activities", description = "Registro e consulta de treinos realizados")
 public class ActivityController {
