@@ -1,6 +1,7 @@
 package com.wellness.ritmo.domain.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,6 +34,8 @@ public class User implements Serializable {
     private String username;
 
     @Column(name = "password", nullable = false, length = 200)
+    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,10}$",
+            message = "Senha deve conter letras e números")
     private String password;
 
     @Column(name = "email", nullable = false, length = 200)

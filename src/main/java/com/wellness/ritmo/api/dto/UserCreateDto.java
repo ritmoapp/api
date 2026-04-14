@@ -2,7 +2,6 @@ package com.wellness.ritmo.api.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -21,7 +20,6 @@ public class UserCreateDto {
     private String email;
 
     @NotBlank
-    @PositiveOrZero
     @Size(min = 6, max = 10)
     private String password;
 
