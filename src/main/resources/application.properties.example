@@ -1,17 +1,19 @@
 spring.application.name=ritmo
 
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=password
+spring.datasource.url=${DB_URL:jdbc:h2:mem:testdb}
+spring.datasource.username=${DB_USERNAME:sa}
+spring.datasource.password=${DB_PASSWORD:password}
 spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+# Define o prefixo global para todos os endpoints da aplicação
+server.servlet.context-path=/api/v1
 
 # Springdoc OpenApi 3.1 & Swagger 3
 springdoc.swagger-ui.path=/ritmo.html
 springdoc.api-docs.path=/docs-ritmo
 
 # Ollama - Servidor local
-spring.ai.ollama.base-url=http://0.0.0.0
+spring.ai.ollama.base-url=${OLLAMA_URL:http://localhost:11434}
 spring.ai.ollama.chat.model=llama3.2
 spring.ai.ollama.chat.options.temperature=0.7
 spring.ai.ollama.chat.options.num-predict=500
