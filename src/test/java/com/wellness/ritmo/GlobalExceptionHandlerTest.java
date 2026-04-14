@@ -1,4 +1,4 @@
-package com.wellnes.ritmo;
+package com.wellness.ritmo;
 
 import com.wellness.ritmo.api.exception.GlobalExceptionHandler;
 import jakarta.persistence.EntityNotFoundException;
