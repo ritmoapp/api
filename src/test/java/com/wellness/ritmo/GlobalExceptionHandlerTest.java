@@ -48,6 +48,11 @@ class GlobalExceptionHandlerTest {
             throw new IllegalArgumentException("Parâmetro inválido fornecido");
         }
 
+        @GetMapping("/access-denied")
+        public void throwAccessDenied() {
+            throw new org.springframework.security.access.AccessDeniedException("Acesso não autorizado");
+        }
+
         @GetMapping("/generic-error")
         public void throwGenericError() {
             throw new RuntimeException("Erro catastrófico");
@@ -110,6 +115,16 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Parâmetro inválido fornecido"))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.errors").doesNotExist());
+    }
+
+    @Test
+    void shouldReturn403WhenAccessDeniedException() throws Exception {
+        mockMvc.perform(get("/test/access-denied"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Acesso negado: você não tem permissão para acessar este recurso"))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.errors").doesNotExist());
     }
