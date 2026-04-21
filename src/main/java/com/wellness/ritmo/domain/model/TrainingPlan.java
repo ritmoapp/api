@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,12 @@ public class TrainingPlan {
             fetch = FetchType.LAZY
     )
     private List<TrainingSession> sessions = new ArrayList<>();
+
+    @Column(name = "active", nullable = false)
+    private Boolean active = true;
+
+    @Column(name = "week_start", nullable = false)
+    private LocalDate weekStart;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

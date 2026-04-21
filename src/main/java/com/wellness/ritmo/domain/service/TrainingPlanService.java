@@ -2,9 +2,11 @@ package com.wellness.ritmo.domain.service;
 
 import com.wellness.ritmo.domain.model.*;
 import com.wellness.ritmo.domain.model.Enum.GoalStatus;
+import com.wellness.ritmo.domain.model.Enum.SessionStatus;
 import com.wellness.ritmo.domain.model.Enum.SessionType;
 import com.wellness.ritmo.domain.repository.GoalRepository;
 import com.wellness.ritmo.domain.repository.TrainingPlanRepository;
+import com.wellness.ritmo.domain.repository.TrainingSessionRepository;
 import com.wellness.ritmo.domain.repository.UserAvailabilityRepository;
 import com.wellness.ritmo.domain.repository.UserProfileRepository;
 import com.wellness.ritmo.domain.service.strategy.PaceCalculationStrategy;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,6 +33,7 @@ public class TrainingPlanService {
     private final UserAvailabilityRepository userAvailabilityRepository;
     private final UserProfileRepository userProfileRepository;
     private final TrainingPlanRepository trainingPlanRepository;
+    private final TrainingSessionRepository trainingSessionRepository;
     private final Map<SessionType, PaceCalculationStrategy> paceStrategies;
 
     public TrainingPlanService(
@@ -36,11 +41,13 @@ public class TrainingPlanService {
             UserAvailabilityRepository userAvailabilityRepository,
             UserProfileRepository userProfileRepository,
             TrainingPlanRepository trainingPlanRepository,
+            TrainingSessionRepository trainingSessionRepository,
             List<PaceCalculationStrategy> strategies) {
         this.goalRepository = goalRepository;
         this.userAvailabilityRepository = userAvailabilityRepository;
         this.userProfileRepository = userProfileRepository;
         this.trainingPlanRepository = trainingPlanRepository;
+        this.trainingSessionRepository = trainingSessionRepository;
         this.paceStrategies = strategies.stream()
                 .collect(Collectors.toMap(PaceCalculationStrategy::supports, Function.identity()));
     }
@@ -48,6 +55,10 @@ public class TrainingPlanService {
     @Transactional
     public TrainingPlan generatePlan(Long userId, Long goalId) {
         log.info("Iniciando geração de plano para userId={} goalId={}", userId, goalId);
+
+        if (trainingPlanRepository.existsByUserIdAndActiveTrue(userId)) {
+            throw new IllegalStateException("Usuário " + userId + " já possui um plano ativo");
+        }
 
         Goal goal = goalRepository.findByIdAndUserIdAndStatus(goalId, userId, GoalStatus.OPEN)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -76,6 +87,8 @@ public class TrainingPlanService {
         TrainingPlan plan = new TrainingPlan();
         plan.setUser(user);
         plan.setGoal(goal);
+        plan.setActive(true);
+        plan.setWeekStart(LocalDate.now().with(DayOfWeek.MONDAY));
 
         List<TrainingSession> sessions = new ArrayList<>();
         for (DayOfWeek day : selectedDays) {
@@ -104,6 +117,38 @@ public class TrainingPlanService {
                 userId, goalId, sessions.size());
 
         return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public TrainingPlan findCurrentPlan(Long userId) {
+        LocalDate weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
+        return trainingPlanRepository.findByUserIdAndActiveTrueAndWeekStart(userId, weekStart)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Nenhum plano ativo encontrado para o usuário " + userId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<TrainingSession> findSessions(Long userId, Long planId) {
+        TrainingPlan plan = trainingPlanRepository.findByIdAndUserId(planId, userId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Plano " + planId + " não encontrado para o usuário " + userId));
+        return plan.getSessions();
+    }
+
+    @Transactional
+    public TrainingSession completeSession(Long userId, Long planId, Long sessionId) {
+        TrainingSession session = trainingSessionRepository
+                .findByIdAndTrainingPlanIdAndTrainingPlanUserId(sessionId, planId, userId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Sessão " + sessionId + " não encontrada para o plano " + planId + " do usuário " + userId));
+
+        if (session.getStatus() == SessionStatus.COMPLETED) {
+            throw new IllegalStateException("Sessão " + sessionId + " já está concluída");
+        }
+
+        session.setStatus(SessionStatus.COMPLETED);
+        session.setCompletedAt(LocalDateTime.now());
+        return trainingSessionRepository.save(session);
     }
 
     List<DayOfWeek> selectDays(List<UserAvailability> availabilities, int weeklyFrequency) {
