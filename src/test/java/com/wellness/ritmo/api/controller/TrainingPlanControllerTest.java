@@ -47,7 +47,7 @@ class TrainingPlanControllerTest {
     private static final Long GOAL_ID = 10L;
     private static final Long PLAN_ID = 100L;
     private static final Long SESSION_ID = 200L;
-    private static final String BASE_URL = "/api/v1/users/{userId}/training-plans";
+    private static final String BASE_URL = "/users/{userId}/training-plans";
 
     private TrainingPlan plan;
     private TrainingSession session;
@@ -108,11 +108,10 @@ class TrainingPlanControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new GeneratePlanRequest(GOAL_ID))))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(PLAN_ID))
-                .andExpect(jsonPath("$.userId").value(USER_ID))
-                .andExpect(jsonPath("$.goalId").value(GOAL_ID))
-                .andExpect(jsonPath("$.active").value(true))
-                .andExpect(jsonPath("$.sessions", hasSize(3)));
+                .andExpect(jsonPath("$.week").isNumber())
+                .andExpect(jsonPath("$.startsOn").exists())
+                .andExpect(jsonPath("$.sessions", hasSize(3)))
+                .andExpect(jsonPath("$.sessions[0].pace").isString());
 
         verify(trainingPlanService).generatePlan(USER_ID, GOAL_ID);
     }
@@ -152,8 +151,8 @@ class TrainingPlanControllerTest {
 
         mockMvc.perform(get(BASE_URL + "/current", USER_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(PLAN_ID))
-                .andExpect(jsonPath("$.active").value(true))
+                .andExpect(jsonPath("$.week").isNumber())
+                .andExpect(jsonPath("$.startsOn").exists())
                 .andExpect(jsonPath("$.sessions", hasSize(3)));
     }
 
@@ -178,7 +177,7 @@ class TrainingPlanControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].sessionType").exists())
-                .andExpect(jsonPath("$[0].targetPaceSec").exists());
+                .andExpect(jsonPath("$[0].pace").isString());
     }
 
     @Test
@@ -202,6 +201,7 @@ class TrainingPlanControllerTest {
         mockMvc.perform(patch(BASE_URL + "/{planId}/sessions/{sessionId}/complete", USER_ID, PLAN_ID, SESSION_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(SESSION_ID))
+                .andExpect(jsonPath("$.pace").value("06:00"))
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.completedAt").exists());
     }

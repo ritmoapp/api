@@ -1,8 +1,8 @@
 package com.wellness.ritmo.api.controller;
 
 import com.wellness.ritmo.api.dto.GeneratePlanRequest;
-import com.wellness.ritmo.api.dto.TrainingPlanResponse;
-import com.wellness.ritmo.api.dto.TrainingSessionResponse;
+import com.wellness.ritmo.api.dto.SessionResponseDto;
+import com.wellness.ritmo.api.dto.TrainingPlanResponseDto;
 import com.wellness.ritmo.api.dto.mapper.TrainingPlanMapper;
 import com.wellness.ritmo.domain.model.TrainingPlan;
 import com.wellness.ritmo.domain.model.TrainingSession;
@@ -31,7 +31,7 @@ public class TrainingPlanController {
     @ApiResponse(responseCode = "201", description = "Plano criado com sucesso")
     @ApiResponse(responseCode = "404", description = "Goal ou perfil não encontrado para o usuário")
     @ApiResponse(responseCode = "409", description = "Já existe um plano ativo para este usuário")
-    public TrainingPlanResponse generate(
+    public TrainingPlanResponseDto generate(
             @PathVariable Long userId,
             @Valid @RequestBody GeneratePlanRequest request
     ) {
@@ -43,7 +43,7 @@ public class TrainingPlanController {
     @Operation(summary = "Retorna o plano ativo da semana atual")
     @ApiResponse(responseCode = "200", description = "Plano ativo encontrado")
     @ApiResponse(responseCode = "404", description = "Nenhum plano ativo encontrado para o usuário")
-    public TrainingPlanResponse current(@PathVariable Long userId) {
+    public TrainingPlanResponseDto current(@PathVariable Long userId) {
         TrainingPlan plan = trainingPlanService.findCurrentPlan(userId);
         return TrainingPlanMapper.toResponse(plan);
     }
@@ -52,7 +52,7 @@ public class TrainingPlanController {
     @Operation(summary = "Retorna as sessões de um plano de treino")
     @ApiResponse(responseCode = "200", description = "Lista de sessões retornada com sucesso")
     @ApiResponse(responseCode = "404", description = "Plano não encontrado ou não pertence ao usuário")
-    public List<TrainingSessionResponse> sessions(
+    public List<SessionResponseDto> sessions(
             @PathVariable Long userId,
             @PathVariable Long planId
     ) {
@@ -67,7 +67,7 @@ public class TrainingPlanController {
     @ApiResponse(responseCode = "200", description = "Sessão marcada como concluída")
     @ApiResponse(responseCode = "404", description = "Sessão não encontrada ou não pertence ao plano/usuário")
     @ApiResponse(responseCode = "409", description = "Sessão já está concluída")
-    public TrainingSessionResponse completeSession(
+    public SessionResponseDto completeSession(
             @PathVariable Long userId,
             @PathVariable Long planId,
             @PathVariable Long sessionId
