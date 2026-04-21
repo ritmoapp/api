@@ -1,6 +1,7 @@
 package com.wellness.ritmo.domain.service;
 
 import com.wellness.ritmo.domain.model.Activity;
+import com.wellness.ritmo.domain.model.Enum.GoalType;
 import com.wellness.ritmo.domain.model.Goal;
 import com.wellness.ritmo.domain.service.strategy.GoalEvaluationStrategy;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 @Service
 public class GoalEvaluationService {
 
-    private final Map<com.wellness.ritmo.domain.model.GoalType, GoalEvaluationStrategy> strategies;
+    private final Map<GoalType, GoalEvaluationStrategy> strategies;
 
     public GoalEvaluationService(List<GoalEvaluationStrategy> strategyList) {
         this.strategies = strategyList.stream()

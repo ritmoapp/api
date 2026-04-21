@@ -1,7 +1,7 @@
 package com.wellness.ritmo.domain.repository;
 
 import com.wellness.ritmo.domain.model.Goal;
-import com.wellness.ritmo.domain.model.GoalStatus;
+import com.wellness.ritmo.domain.model.Enum.GoalStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

@@ -1,5 +1,7 @@
 package com.wellness.ritmo.domain.model;
 
+import com.wellness.ritmo.domain.model.Enum.ConditioningLevel;
+import com.wellness.ritmo.domain.model.Enum.Gender;
 import com.wellness.ritmo.domain.model.listener.UserProfileListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,5 +1,6 @@
 package com.wellness.ritmo.domain.model;
 
+import com.wellness.ritmo.domain.model.Enum.IntensityPreference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
