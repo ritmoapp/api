@@ -6,6 +6,7 @@ import com.wellness.ritmo.domain.model.Enum.GoalType;
 import com.wellness.ritmo.domain.model.Enum.SessionType;
 import com.wellness.ritmo.domain.repository.GoalRepository;
 import com.wellness.ritmo.domain.repository.TrainingPlanRepository;
+import com.wellness.ritmo.domain.repository.TrainingSessionRepository;
 import com.wellness.ritmo.domain.repository.UserAvailabilityRepository;
 import com.wellness.ritmo.domain.repository.UserProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -36,6 +37,7 @@ class TrainingPlanServiceTest {
     @Mock private UserAvailabilityRepository userAvailabilityRepository;
     @Mock private UserProfileRepository userProfileRepository;
     @Mock private TrainingPlanRepository trainingPlanRepository;
+    @Mock private TrainingSessionRepository trainingSessionRepository;
 
     private TrainingPlanService trainingPlanService;
 
@@ -54,6 +56,7 @@ class TrainingPlanServiceTest {
             userAvailabilityRepository,
             userProfileRepository,
             trainingPlanRepository,
+            trainingSessionRepository,
             List.of(
                 new EasyPaceStrategy(),
                 new IntervalsPaceStrategy(),

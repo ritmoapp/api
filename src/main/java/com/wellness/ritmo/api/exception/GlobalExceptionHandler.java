@@ -67,6 +67,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponseDto> handleConflict(IllegalStateException ex) {
+        var response = new ErrorResponseDto(
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage() != null ? ex.getMessage() : "Conflito de estado"
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneralExceptions(Exception ex) {
         logger.error("Erro não tratado capturado pelo GlobalExceptionHandler", ex);

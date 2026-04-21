@@ -1,5 +1,6 @@
 package com.wellness.ritmo.domain.model;
 
+import com.wellness.ritmo.domain.model.Enum.SessionStatus;
 import com.wellness.ritmo.domain.model.Enum.SessionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -39,4 +41,11 @@ public class TrainingSession {
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", nullable = false, length = 15)
     private DayOfWeek dayOfWeek;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private SessionStatus status = SessionStatus.PENDING;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 }
