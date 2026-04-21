@@ -1,6 +1,8 @@
 package com.wellness.ritmo.domain.service.strategy;
 
 import com.wellness.ritmo.domain.model.*;
+import com.wellness.ritmo.domain.model.Enum.GoalStatus;
+import com.wellness.ritmo.domain.model.Enum.GoalType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

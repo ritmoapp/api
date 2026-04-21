@@ -1,4 +1,4 @@
-package com.wellness.ritmo.domain.model;
+package com.wellness.ritmo.domain.model.Enum;
 
 public enum GoalType {
     DISTANCE,

@@ -3,6 +3,8 @@ package com.wellness.ritmo.domain.service;
 import com.wellness.ritmo.api.dto.ActivityRequestDto;
 import com.wellness.ritmo.api.dto.ActivityResponseDto;
 import com.wellness.ritmo.domain.model.*;
+import com.wellness.ritmo.domain.model.Enum.GoalStatus;
+import com.wellness.ritmo.domain.model.Enum.GoalType;
 import com.wellness.ritmo.domain.repository.ActivityRepository;
 import com.wellness.ritmo.domain.repository.GoalRepository;
 import com.wellness.ritmo.domain.repository.UserRepository;

@@ -1,5 +1,7 @@
 package com.wellness.ritmo.domain.model;
 
+import com.wellness.ritmo.domain.model.Enum.GoalStatus;
+import com.wellness.ritmo.domain.model.Enum.GoalType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -2,7 +2,7 @@ package com.wellness.ritmo.domain.service.strategy;
 
 import com.wellness.ritmo.domain.model.Activity;
 import com.wellness.ritmo.domain.model.Goal;
-import com.wellness.ritmo.domain.model.GoalType;
+import com.wellness.ritmo.domain.model.Enum.GoalType;
 import org.springframework.stereotype.Component;
 
 @Component
