@@ -1,5 +1,6 @@
 package com.wellness.ritmo.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wellness.ritmo.domain.model.Enum.ConditioningLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ public class UserProfileHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",

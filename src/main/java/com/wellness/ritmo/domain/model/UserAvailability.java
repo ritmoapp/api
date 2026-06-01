@@ -1,5 +1,6 @@
 package com.wellness.ritmo.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wellness.ritmo.domain.model.Enum.IntensityPreference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,7 @@ public class UserAvailability {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",

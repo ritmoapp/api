@@ -1,5 +1,6 @@
 package com.wellness.ritmo.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wellness.ritmo.domain.model.Enum.GoalStatus;
 import com.wellness.ritmo.domain.model.Enum.GoalType;
 import jakarta.persistence.*;
@@ -28,6 +29,7 @@ public class Goal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",
