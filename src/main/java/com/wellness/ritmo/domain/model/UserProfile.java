@@ -1,5 +1,6 @@
 package com.wellness.ritmo.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wellness.ritmo.domain.model.Enum.ConditioningLevel;
 import com.wellness.ritmo.domain.model.Enum.Gender;
 import com.wellness.ritmo.domain.model.listener.UserProfileListener;
@@ -25,6 +26,7 @@ public class UserProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",
@@ -57,8 +59,17 @@ public class UserProfile {
     @Column(name = "weekly_mileage_km")
     private Double weeklyMileageKm;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    private void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
     @PreUpdate
     private void onUpdate() {

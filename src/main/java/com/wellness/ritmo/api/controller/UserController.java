@@ -6,55 +6,59 @@ import com.wellness.ritmo.api.dto.mapper.UserMapper;
 import com.wellness.ritmo.domain.model.User;
 import com.wellness.ritmo.domain.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springdoc.api.ErrorMessage;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
+@Tag(name = "Users", description = "Gerenciamento de usuários")
 public class UserController {
+
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
-    @Operation(summary = "created a new user", responses = {
-            @ApiResponse(responseCode = "201", description = "recursos criado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponseDto.class))),
-            @ApiResponse(responseCode = "409", description = "Usuario email já cadastrado no sisterma", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessage.class))),
-            @ApiResponse(responseCode = "422", description = "Recursos não processado por dados de entrada invalidos", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessage.class)))
-    })
     @PostMapping
-    public ResponseEntity<UserResponseDto> create(@Valid @RequestBody UserCreateDto createDto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "Criar novo usuário",
+            description = "Cria um novo usuário no sistema"
+    )
+    @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso")
+    @ApiResponse(responseCode = "409", description = "Usuário ou email já cadastrado no sistema")
+    @ApiResponse(responseCode = "422", description = "Dados de entrada inválidos")
+    public UserResponseDto create(@Valid @RequestBody UserCreateDto createDto) {
         User userResponse = userService.save(createDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(UserMapper.toDto(userResponse));
+        return UserMapper.toDto(userResponse);
     }
 
-    @Operation(summary = "recuperar um usuário por id", responses = {
-            @ApiResponse(responseCode = "200", description = "recursos recuperado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponseDto.class))),
-            @ApiResponse(responseCode = "404", description = "Recursos não encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessage.class)))
-    })
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getById(@PathVariable Long id) {
+    @Operation(
+            summary = "Recuperar usuário por ID",
+            description = "Retorna os dados de um usuário específico"
+    )
+    @ApiResponse(responseCode = "200", description = "Usuário recuperado com sucesso")
+    @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    public UserResponseDto getById(@PathVariable Long id) {
         User userResponse = userService.searchById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(UserMapper.toDto(userResponse));
+        return UserMapper.toDto(userResponse);
     }
 
-    @Operation(summary = "listar todos os usuários com paginação", responses = {
-            @ApiResponse(responseCode = "200", description = "recursos recuperados com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Page.class)))
-    })
-    @GetMapping("")
-    public ResponseEntity<Page<UserResponseDto>> getAll(
+    @GetMapping
+    @Operation(
+            summary = "Listar todos os usuários",
+            description = "Retorna uma lista paginada de todos os usuários"
+    )
+    @ApiResponse(responseCode = "200", description = "Lista de usuários recuperada com sucesso")
+    public Page<UserResponseDto> getAll(
             @PageableDefault(size = 10, sort = "id") Pageable pageable) {
         Page<User> users = userService.getAll(pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(users.map(UserMapper::toDto));
+        return users.map(UserMapper::toDto);
     }
 }
