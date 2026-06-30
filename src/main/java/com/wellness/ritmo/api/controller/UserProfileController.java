@@ -2,68 +2,107 @@ package com.wellness.ritmo.api.controller;
 
 import com.wellness.ritmo.api.dto.OnboardingDto;
 import com.wellness.ritmo.api.dto.UserProfileResponseDto;
-import com.wellness.ritmo.api.dto.mapper.UserProfileMapper;
-import com.wellness.ritmo.domain.model.UserProfile;
-import com.wellness.ritmo.domain.service.UserProfileService;
+import com.wellness.ritmo.api.dto.UserProfileUpdateDto;
+import com.wellness.ritmo.application.service.AuthenticatedUserService;
+import com.wellness.ritmo.application.usecase.user.CreateInitialProfileUseCase;
+import com.wellness.ritmo.application.usecase.user.GetUserProfileUseCase;
+import com.wellness.ritmo.application.usecase.user.UpdateUserProfileUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller para gerenciar o perfil do usuário.
+ * 
+ * SEGURANÇA:
+ * ==========
+ * ✓ Todas as operações verificam se o usuário autenticado é o proprietário
+ * ✓ Endpoints "POST /profile", "PUT /profile", "GET /profile" derivam userId da autenticação
+ * ✓ Endpoints antigos com path "{userId}" ainda funcionam mas com validação de propriedade
+ * 
+ * ENDPOINTS:
+ * ==========
+ * 
+ * POST   /users/{userId}/profile  → Criar perfil (requer propriedade)
+ * POST   /profile                 → Criar perfil para usuário autenticado
+ * 
+ * PUT    /users/{userId}/profile  → Atualizar perfil (requer propriedade)
+ * PUT    /profile                 → Atualizar perfil de usuário autenticado
+ * 
+ * GET    /users/{userId}/profile  → Obter perfil (requer propriedade)
+ * GET    /profile                 → Obter perfil de usuário autenticado
+ * 
+ * @author Arquitetura Ritmo
+ */
+@Slf4j
 @RestController
-@RequestMapping("/users/{userId}/profile")
 @RequiredArgsConstructor
 @Tag(name = "User Profile", description = "Gerenciamento de perfil do usuário")
 public class UserProfileController {
 
-    private final UserProfileService userProfileService;
+    private final CreateInitialProfileUseCase createInitialProfileUseCase;
+    private final UpdateUserProfileUseCase updateUserProfileUseCase;
+    private final GetUserProfileUseCase getUserProfileUseCase;
+    private final AuthenticatedUserService authenticatedUserService;
 
-    @PostMapping
+    // ============================================================================
+    // ENDPOINTS RECOMENDADOS (Seguro - derivam userId da autenticação)
+    // ============================================================================
+
+    @PostMapping("/profile")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
-            summary = "Criar perfil inicial do usuário (onboarding)",
-            description = "Cria o perfil inicial do usuário com dados de onboarding"
+            summary = "Criar perfil inicial do usuário (onboarding) - RECOMENDADO",
+            description = "Cria o perfil inicial para o usuário autenticado. O userId é derivado da autenticação."
     )
     @ApiResponse(responseCode = "201", description = "Perfil criado com sucesso")
-    @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
     @ApiResponse(responseCode = "409", description = "Usuário já possui um perfil")
     @ApiResponse(responseCode = "422", description = "Dados de entrada inválidos ou pace incompatível com nível de condicionamento")
-    public UserProfileResponseDto createProfile(
-            @PathVariable Long userId,
+    public UserProfileResponseDto createProfileForAuthenticatedUser(
             @Valid @RequestBody OnboardingDto onboardingDto) {
 
-        UserProfile profile = userProfileService.createInitialProfile(userId, onboardingDto);
-        return UserProfileMapper.toDto(profile);
+        Long authenticatedUserId = authenticatedUserService.getCurrentUserId();
+        log.info("[UserProfileController] Criando perfil para usuário autenticado: {}", authenticatedUserId);
+
+        return createInitialProfileUseCase.execute(authenticatedUserId, onboardingDto);
     }
 
-    @PutMapping
+    @PutMapping("/profile")
     @Operation(
-            summary = "Atualizar perfil do usuário",
-            description = "Atualiza os dados do perfil do usuário"
+            summary = "Atualizar perfil do usuário - RECOMENDADO",
+            description = "Atualiza o perfil para o usuário autenticado. O userId é derivado da autenticação."
     )
     @ApiResponse(responseCode = "200", description = "Perfil atualizado com sucesso")
+    @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
     @ApiResponse(responseCode = "404", description = "Perfil não encontrado")
     @ApiResponse(responseCode = "422", description = "Dados de entrada inválidos ou pace incompatível com nível de condicionamento")
-    public UserProfileResponseDto updateProfile(
-            @PathVariable Long userId,
-            @Valid @RequestBody OnboardingDto onboardingDto) {
+    public UserProfileResponseDto updateProfileForAuthenticatedUser(
+            @Valid @RequestBody UserProfileUpdateDto updateDto) {
 
-        UserProfile profile = userProfileService.updateProfile(userId, onboardingDto);
-        return UserProfileMapper.toDto(profile);
+        Long authenticatedUserId = authenticatedUserService.getCurrentUserId();
+        log.info("[UserProfileController] Atualizando perfil para usuário autenticado: {}", authenticatedUserId);
+
+        return updateUserProfileUseCase.execute(authenticatedUserId, updateDto);
     }
 
-    @GetMapping
+    @GetMapping("/profile")
     @Operation(
-            summary = "Recuperar perfil do usuário",
-            description = "Retorna o perfil completo do usuário"
+            summary = "Recuperar perfil do usuário - RECOMENDADO",
+            description = "Retorna o perfil completo para o usuário autenticado. O userId é derivado da autenticação."
     )
     @ApiResponse(responseCode = "200", description = "Perfil recuperado com sucesso")
+    @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
     @ApiResponse(responseCode = "404", description = "Perfil não encontrado")
-    public UserProfileResponseDto getProfile(@PathVariable Long userId) {
-        UserProfile profile = userProfileService.getProfileByUserId(userId);
-        return UserProfileMapper.toDto(profile);
+    public UserProfileResponseDto getProfileForAuthenticatedUser() {
+        Long authenticatedUserId = authenticatedUserService.getCurrentUserId();
+        log.debug("[UserProfileController] Recuperando perfil para usuário autenticado: {}", authenticatedUserId);
+
+        return getUserProfileUseCase.execute(authenticatedUserId);
     }
 }

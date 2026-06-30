@@ -16,15 +16,15 @@ public class UserMapper {
     }
 
     public static UserResponseDto toDto(User user){
-        PropertyMap<User,UserResponseDto> props = new PropertyMap<User, UserResponseDto>() {
-            @Override
-            protected void configure() {
-
-            }
-        };
-        ModelMapper mapper = new ModelMapper();
-        mapper.addMappings(props);
-        return mapper.map(user, UserResponseDto.class);
+        UserResponseDto dto = new UserResponseDto();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setCreatedOn(user.getCreatedOn());
+        if (user.getProfile() != null) {
+            dto.setUserProfileResponseDto(UserProfileMapper.toDto(user.getProfile()));
+        }
+        return dto;
     }
 
     public static List<UserResponseDto> toListDto(List<User> users){

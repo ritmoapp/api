@@ -14,4 +14,5 @@ public class UserResponseDto {
     private String username;
     private String email;
     private LocalDateTime createdOn;
+    private UserProfileResponseDto userProfileResponseDto;
 }

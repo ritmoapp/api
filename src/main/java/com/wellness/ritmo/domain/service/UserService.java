@@ -1,11 +1,12 @@
 package com.wellness.ritmo.domain.service;
 
-import com.wellness.ritmo.api.dto.UserCreateDto;
+import com.wellness.ritmo.api.exception.UserAlreadyExistsException;
 import com.wellness.ritmo.domain.model.User;
 import com.wellness.ritmo.domain.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,14 +23,25 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Transactional
-    public User save(UserCreateDto newUser) {
+    public User save(String username, String email, String password) {
+        if (userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException(
+                    "Email já cadastrado: " + email
+            );
+        }
+        if (userRepository.existsByUsername(username)) {
+            throw new UserAlreadyExistsException(
+                    "Username já cadastrado: " + username
+            );
+        }
+
         User user = new User();
         user.setCreatedOn(LocalDateTime.now());
-        user.setUsername(newUser.getUserName());
-        user.setPassword(passwordEncoder.encode(newUser.getPassword()));
-        user.setEmail(newUser.getEmail());
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setEmail(email);
 
-        log.info("[UserService] Criando novo usuário: {}", newUser.getUserName());
+        log.info("[UserService] Criando novo usuário: {}", username);
         return userRepository.save(user);
     }
 

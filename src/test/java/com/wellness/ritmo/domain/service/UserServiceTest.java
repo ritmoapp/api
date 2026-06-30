@@ -1,6 +1,5 @@
 package com.wellness.ritmo.domain.service;
 
-import com.wellness.ritmo.api.dto.UserCreateDto;
 import com.wellness.ritmo.domain.model.User;
 import com.wellness.ritmo.domain.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -39,16 +38,10 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
-    private UserCreateDto userCreateDto;
     private User savedUser;
 
     @BeforeEach
     void setUp() {
-        userCreateDto = new UserCreateDto();
-        userCreateDto.setUserName("johndoe");
-        userCreateDto.setEmail("john.doe@example.com");
-        userCreateDto.setPassword("senha123");
-
         savedUser = new User();
         savedUser.setId(1L);
         savedUser.setUsername("johndoe");
@@ -60,13 +53,15 @@ class UserServiceTest {
     @Test
     @DisplayName("deve salvar usuário com senha criptografada usando BCrypt")
     void shouldSaveUserWithEncryptedPassword() {
+        String username = "johndoe";
+        String email = "john.doe@example.com";
         String rawPassword = "senha123";
         String encodedPassword = "$2a$10$hashedPassword";
 
         when(passwordEncoder.encode(rawPassword)).thenReturn(encodedPassword);
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        User result = userService.save(userCreateDto);
+        User result = userService.save(username, email, rawPassword);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
@@ -164,15 +159,15 @@ class UserServiceTest {
     @Test
     @DisplayName("deve garantir que a senha seja sempre criptografada antes de salvar")
     void shouldAlwaysEncryptPasswordBeforeSaving() {
+        String username = "johndoe";
+        String email = "john.doe@example.com";
         String rawPassword = "mySecretPass";
         String hashedPassword = "$2a$10$differentHash";
-        
-        userCreateDto.setPassword(rawPassword);
 
         when(passwordEncoder.encode(rawPassword)).thenReturn(hashedPassword);
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        userService.save(userCreateDto);
+        userService.save(username, email, rawPassword);
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
@@ -187,11 +182,15 @@ class UserServiceTest {
     @Test
     @DisplayName("deve definir createdOn automaticamente ao salvar usuário")
     void shouldSetCreatedOnAutomaticallyWhenSaving() {
+        String username = "johndoe";
+        String email = "john.doe@example.com";
+        String rawPassword = "senha123";
+
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$hash");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         LocalDateTime beforeSave = LocalDateTime.now();
-        userService.save(userCreateDto);
+        userService.save(username, email, rawPassword);
         LocalDateTime afterSave = LocalDateTime.now();
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -203,18 +202,22 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("deve preservar todos os campos do DTO ao salvar")
-    void shouldPreserveAllDtoFieldsWhenSaving() {
+    @DisplayName("deve preservar todos os campos ao salvar")
+    void shouldPreserveAllFieldsWhenSaving() {
+        String username = "johndoe";
+        String email = "john.doe@example.com";
+        String rawPassword = "senha123";
+
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$hash");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        userService.save(userCreateDto);
+        userService.save(username, email, rawPassword);
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
 
         User capturedUser = userCaptor.getValue();
-        assertThat(capturedUser.getUsername()).isEqualTo(userCreateDto.getUserName());
-        assertThat(capturedUser.getEmail()).isEqualTo(userCreateDto.getEmail());
+        assertThat(capturedUser.getUsername()).isEqualTo(username);
+        assertThat(capturedUser.getEmail()).isEqualTo(email);
     }
 }
