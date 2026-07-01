@@ -1,6 +1,5 @@
 package com.wellness.ritmo.domain.service;
 
-import com.wellness.ritmo.api.dto.GoalRequestDto;
 import com.wellness.ritmo.domain.model.Enum.GoalStatus;
 import com.wellness.ritmo.domain.model.Enum.GoalType;
 import com.wellness.ritmo.domain.model.Goal;
@@ -13,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -24,22 +24,23 @@ public class GoalService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Goal create(Long userId, GoalRequestDto dto) {
+    public Goal create(Long userId, GoalType goalType, BigDecimal distanceKm, 
+                       Integer targetTimeSec, Integer paceTargetSec, Integer weeklyFrequency) {
         log.info("[GoalService] Criando goal para usuário: {}", userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + userId));
 
-        validateGoalFields(dto);
+        validateGoalFields(goalType, distanceKm, targetTimeSec, paceTargetSec, weeklyFrequency);
 
         Goal goal = new Goal();
         goal.setUser(user);
-        goal.setGoalType(dto.getGoalType());
+        goal.setGoalType(goalType);
         goal.setStatus(GoalStatus.OPEN);
-        goal.setDistanceKm(dto.getDistanceKm());
-        goal.setTargetTimeSec(dto.getTargetTimeSec());
-        goal.setPaceTargetSec(dto.getPaceTargetSec());
-        goal.setWeeklyFrequency(dto.getWeeklyFrequency());
+        goal.setDistanceKm(distanceKm);
+        goal.setTargetTimeSec(targetTimeSec);
+        goal.setPaceTargetSec(paceTargetSec);
+        goal.setWeeklyFrequency(weeklyFrequency);
 
         Goal saved = goalRepository.save(goal);
         log.info("[GoalService] Goal criado com sucesso: {}", saved.getId());
@@ -58,9 +59,7 @@ public class GoalService {
     public List<Goal> getAllByUser(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + userId));
-        return goalRepository.findAll().stream()
-                .filter(g -> g.getUser().getId().equals(userId))
-                .toList();
+        return goalRepository.findAllByUserId(userId);
     }
 
     @Transactional
@@ -73,23 +72,19 @@ public class GoalService {
         log.info("[GoalService] Goal {} cancelado para usuário: {}", goalId, userId);
     }
 
-    private void validateGoalFields(GoalRequestDto dto) {
-        GoalType type = dto.getGoalType();
-
-        if (type == GoalType.DISTANCE && dto.getDistanceKm() == null) {
+    private void validateGoalFields(GoalType type, BigDecimal distanceKm, 
+                                   Integer targetTimeSec, Integer paceTargetSec, Integer weeklyFrequency) {
+        if (type == GoalType.DISTANCE && distanceKm == null) {
             throw new IllegalArgumentException("Distância é obrigatória para objetivo do tipo DISTANCE");
         }
-        if (type == GoalType.TIME && dto.getTargetTimeSec() == null) {
+        if (type == GoalType.TIME && targetTimeSec == null) {
             throw new IllegalArgumentException("Tempo alvo é obrigatório para objetivo do tipo TIME");
         }
-        if (type == GoalType.PACE && dto.getPaceTargetSec() == null) {
+        if (type == GoalType.PACE && paceTargetSec == null) {
             throw new IllegalArgumentException("Pace alvo é obrigatório para objetivo do tipo PACE");
         }
-        if (type == GoalType.FREQUENCY && dto.getWeeklyFrequency() == null) {
+        if (type == GoalType.FREQUENCY && weeklyFrequency == null) {
             throw new IllegalArgumentException("Frequência semanal é obrigatória para objetivo do tipo FREQUENCY");
-        }
-        if (type == GoalType.RACE && dto.getRaceTargetId() == null) {
-            throw new IllegalArgumentException("Prova alvo é obrigatória para objetivo do tipo RACE");
         }
     }
 }

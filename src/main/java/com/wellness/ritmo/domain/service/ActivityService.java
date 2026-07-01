@@ -1,8 +1,5 @@
 package com.wellness.ritmo.domain.service;
 
-import com.wellness.ritmo.api.dto.ActivityRequestDto;
-import com.wellness.ritmo.api.dto.ActivityResponseDto;
-import com.wellness.ritmo.api.dto.GoalEvaluationResultDto;
 import com.wellness.ritmo.domain.model.*;
 import com.wellness.ritmo.domain.model.Enum.GoalStatus;
 import com.wellness.ritmo.domain.repository.ActivityRepository;
@@ -16,6 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,61 +28,58 @@ public class ActivityService {
     private final AICoachService aiCoachService;
 
     @Transactional
-    public ActivityResponseDto register(Long userId, ActivityRequestDto dto) {
+    public ActivityWithEvaluation register(Long userId, BigDecimal distanceKm, Integer durationSec,
+                                          Integer paceAvgSec, Integer heartRateAvg, Integer heartRateMax,
+                                          Integer perceivedEffort, LocalDateTime startedAt,
+                                          LocalDateTime finishedAt, String notes, Long goalId) {
+        
+        log.info("[ActivityService] Registrando atividade para usuário: {}", userId);
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + userId));
 
-        Activity activity = buildActivity(dto, user);
+        Activity activity = new Activity();
+        activity.setUser(user);
+        activity.setDistanceKm(distanceKm);
+        activity.setDurationSec(durationSec);
+        activity.setPaceAvgSec(paceAvgSec);
+        activity.setHeartRateAvg(heartRateAvg);
+        activity.setHeartRateMax(heartRateMax);
+        activity.setPerceivedEffort(perceivedEffort);
+        activity.setStartedAt(startedAt);
+        activity.setFinishedAt(finishedAt);
+        activity.setNotes(notes);
 
         EvaluationResult evaluation = null;
-        if (dto.goalId() != null) {
+        if (goalId != null) {
             Goal goal = goalRepository
-                    .findByIdAndUserIdAndStatus(dto.goalId(), userId, GoalStatus.OPEN)
+                    .findByIdAndUserIdAndStatus(goalId, userId, GoalStatus.OPEN)
                     .orElseThrow(() -> new EntityNotFoundException(
-                            "Meta não encontrada, não pertence ao usuário, ou não está OPEN: " + dto.goalId()));
+                            "Meta não encontrada, não pertence ao usuário, ou não está OPEN: " + goalId));
             activity.setGoal(goal);
             evaluation = goalEvaluationService.evaluate(activity, goal);
 
             if (evaluation.achieved()) {
                 goalRepository.updateStatus(goal.getId(), GoalStatus.COMPLETED);
-                log.info("[Activity] Meta id={} marcada como COMPLETED para user id={}", goal.getId(), userId);
+                log.info("[ActivityService] Meta id={} marcada como COMPLETED para user id={}", goal.getId(), userId);
             }
         }
 
         Activity saved = activityRepository.save(activity);
         aiCoachService.generateFeedbackAsync(saved);
 
-        return toResponseDto(saved, evaluation);
+        log.info("[ActivityService] Atividade registrada com sucesso. ActivityId: {}", saved.getId());
+
+        return new ActivityWithEvaluation(saved, evaluation);
     }
 
-    private Activity buildActivity(ActivityRequestDto dto, User user) {
-        Activity activity = new Activity();
-        activity.setUser(user);
-        activity.setDistanceKm(dto.distanceKm());
-        activity.setDurationSec(dto.durationSec());
-        activity.setPaceAvgSec(dto.paceAvgSec());
-        activity.setHeartRateAvg(dto.heartRateAvg());
-        activity.setHeartRateMax(dto.heartRateMax());
-        activity.setPerceivedEffort(dto.perceivedEffort());
-        activity.setStartedAt(dto.startedAt());
-        activity.setFinishedAt(dto.finishedAt());
-        activity.setNotes(dto.notes());
-        return activity;
-    }
+    public static class ActivityWithEvaluation {
+        public final Activity activity;
+        public final EvaluationResult evaluation;
 
-    private ActivityResponseDto toResponseDto(Activity saved, EvaluationResult evaluation) {
-        GoalEvaluationResultDto evalDto = evaluation == null ? null
-                : new GoalEvaluationResultDto(evaluation.achieved(), evaluation.summary(), evaluation.delta());
-
-        return new ActivityResponseDto(
-                saved.getId(),
-                saved.getDistanceKm(),
-                saved.getDurationSec(),
-                saved.getPaceAvgSec(),
-                saved.getStartedAt(),
-                saved.getFinishedAt(),
-                evalDto,
-                "O feedback do seu treinador IA está sendo processado e será salvo em breve."
-        );
+        public ActivityWithEvaluation(Activity activity, EvaluationResult evaluation) {
+            this.activity = activity;
+            this.evaluation = evaluation;
+        }
     }
 }
