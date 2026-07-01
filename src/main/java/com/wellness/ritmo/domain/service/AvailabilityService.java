@@ -1,6 +1,6 @@
 package com.wellness.ritmo.domain.service;
 
-import com.wellness.ritmo.api.dto.AvailabilityRequestDto;
+import com.wellness.ritmo.domain.model.Enum.IntensityPreference;
 import com.wellness.ritmo.domain.model.User;
 import com.wellness.ritmo.domain.model.UserAvailability;
 import com.wellness.ritmo.domain.repository.UserAvailabilityRepository;
@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Slf4j
@@ -22,23 +25,25 @@ public class AvailabilityService {
     private final UserRepository userRepository;
 
     @Transactional
-    public UserAvailability create(Long userId, AvailabilityRequestDto dto) {
+    public UserAvailability create(Long userId, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime,
+                                   Integer maxSessionMinutes, IntensityPreference preferredIntensity,
+                                   LocalDate validFrom, LocalDate validUntil) {
         log.info("[AvailabilityService] Criando disponibilidade para usuário: {}", userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + userId));
 
-        validateTimeRange(dto);
+        validateTimeRange(startTime, endTime, validFrom, validUntil);
 
         UserAvailability availability = new UserAvailability();
         availability.setUser(user);
-        availability.setDayOfWeek(dto.getDayOfWeek());
-        availability.setStartTime(dto.getStartTime());
-        availability.setEndTime(dto.getEndTime());
-        availability.setMaxSessionMinutes(dto.getMaxSessionMinutes());
-        availability.setPreferredIntensity(dto.getPreferredIntensity());
-        availability.setValidFrom(dto.getValidFrom());
-        availability.setValidUntil(dto.getValidUntil());
+        availability.setDayOfWeek(dayOfWeek);
+        availability.setStartTime(startTime);
+        availability.setEndTime(endTime);
+        availability.setMaxSessionMinutes(maxSessionMinutes);
+        availability.setPreferredIntensity(preferredIntensity);
+        availability.setValidFrom(validFrom);
+        availability.setValidUntil(validUntil);
 
         UserAvailability saved = availabilityRepository.save(availability);
         log.info("[AvailabilityService] Disponibilidade criada com sucesso: {}", saved.getId());
@@ -46,24 +51,24 @@ public class AvailabilityService {
     }
 
     @Transactional
-    public List<UserAvailability> createBatch(Long userId, List<AvailabilityRequestDto> dtos) {
-        log.info("[AvailabilityService] Criando {} disponibilidades para usuário: {}", dtos.size(), userId);
+    public List<UserAvailability> createBatch(Long userId, List<AvailabilityData> availabilityDataList) {
+        log.info("[AvailabilityService] Criando {} disponibilidades para usuário: {}", availabilityDataList.size(), userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + userId));
 
-        return dtos.stream().map(dto -> {
-            validateTimeRange(dto);
+        return availabilityDataList.stream().map(data -> {
+            validateTimeRange(data.startTime, data.endTime, data.validFrom, data.validUntil);
 
             UserAvailability availability = new UserAvailability();
             availability.setUser(user);
-            availability.setDayOfWeek(dto.getDayOfWeek());
-            availability.setStartTime(dto.getStartTime());
-            availability.setEndTime(dto.getEndTime());
-            availability.setMaxSessionMinutes(dto.getMaxSessionMinutes());
-            availability.setPreferredIntensity(dto.getPreferredIntensity());
-            availability.setValidFrom(dto.getValidFrom());
-            availability.setValidUntil(dto.getValidUntil());
+            availability.setDayOfWeek(data.dayOfWeek);
+            availability.setStartTime(data.startTime);
+            availability.setEndTime(data.endTime);
+            availability.setMaxSessionMinutes(data.maxSessionMinutes);
+            availability.setPreferredIntensity(data.preferredIntensity);
+            availability.setValidFrom(data.validFrom);
+            availability.setValidUntil(data.validUntil);
 
             return availabilityRepository.save(availability);
         }).toList();
@@ -86,12 +91,34 @@ public class AvailabilityService {
         log.info("[AvailabilityService] Disponibilidade {} removida para usuário: {}", availabilityId, userId);
     }
 
-    private void validateTimeRange(AvailabilityRequestDto dto) {
-        if (dto.getEndTime().isBefore(dto.getStartTime()) || dto.getEndTime().equals(dto.getStartTime())) {
+    private void validateTimeRange(LocalTime startTime, LocalTime endTime, LocalDate validFrom, LocalDate validUntil) {
+        if (endTime.isBefore(startTime) || endTime.equals(startTime)) {
             throw new IllegalArgumentException("Horário de término deve ser posterior ao horário de início");
         }
-        if (dto.getValidUntil() != null && dto.getValidUntil().isBefore(dto.getValidFrom())) {
+        if (validUntil != null && validUntil.isBefore(validFrom)) {
             throw new IllegalArgumentException("Data final de validade deve ser posterior à data inicial");
+        }
+    }
+
+    public static class AvailabilityData {
+        public final DayOfWeek dayOfWeek;
+        public final LocalTime startTime;
+        public final LocalTime endTime;
+        public final Integer maxSessionMinutes;
+        public final IntensityPreference preferredIntensity;
+        public final LocalDate validFrom;
+        public final LocalDate validUntil;
+
+        public AvailabilityData(DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime,
+                               Integer maxSessionMinutes, IntensityPreference preferredIntensity,
+                               LocalDate validFrom, LocalDate validUntil) {
+            this.dayOfWeek = dayOfWeek;
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.maxSessionMinutes = maxSessionMinutes;
+            this.preferredIntensity = preferredIntensity;
+            this.validFrom = validFrom;
+            this.validUntil = validUntil;
         }
     }
 }
