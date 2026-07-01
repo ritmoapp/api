@@ -1,6 +1,5 @@
 package com.wellness.ritmo.domain.service;
 
-import com.wellness.ritmo.api.dto.OnboardingDto;
 import com.wellness.ritmo.domain.model.Enum.ConditioningLevel;
 import com.wellness.ritmo.domain.model.User;
 import com.wellness.ritmo.domain.model.UserProfile;
@@ -12,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,7 +31,16 @@ public class UserProfileService {
     );
 
     @Transactional
-    public UserProfile createInitialProfile(Long userId, OnboardingDto dto) {
+    public UserProfile createInitialProfile(
+        Long userId,
+        com.wellness.ritmo.domain.model.Enum.Gender gender,
+        LocalDate birthDate,
+        Integer heightCm,
+        Double weightKg,
+        ConditioningLevel conditioningLevel,
+        Integer paceAvgSeg,
+        Double weeklyMileageKm
+    ) {
         log.info("[UserProfileService] Criando perfil inicial para usuário: {}", userId);
 
         User user = userRepository.findById(userId)
@@ -42,17 +51,17 @@ public class UserProfileService {
             throw new IllegalStateException("Usuário já possui um perfil criado");
         }
 
-        validatePaceForConditioningLevel(dto.getPaceAvgSeg(), dto.getConditioningLevel());
+        validatePaceForConditioningLevel(paceAvgSeg, conditioningLevel);
 
         UserProfile profile = new UserProfile();
         profile.setUser(user);
-        profile.setGender(dto.getGender());
-        profile.setBirthDate(dto.getBirthDate());
-        profile.setHeightCm(dto.getHeightCm());
-        profile.setWeightKg(dto.getWeightKg());
-        profile.setConditioningLevel(dto.getConditioningLevel());
-        profile.setPaceAvgSeg(dto.getPaceAvgSeg());
-        profile.setWeeklyMileageKm(dto.getWeeklyMileageKm());
+        profile.setGender(gender);
+        profile.setBirthDate(birthDate);
+        profile.setHeightCm(heightCm);
+        profile.setWeightKg(weightKg);
+        profile.setConditioningLevel(conditioningLevel);
+        profile.setPaceAvgSeg(paceAvgSeg);
+        profile.setWeeklyMileageKm(weeklyMileageKm);
 
         UserProfile savedProfile = userProfileRepository.save(profile);
         log.info("[UserProfileService] Perfil criado com sucesso para usuário: {}", userId);
@@ -61,41 +70,38 @@ public class UserProfileService {
     }
 
     @Transactional
-    public UserProfile updateProfile(Long userId, OnboardingDto dto) {
+    public UserProfile updateProfile(
+        Long userId,
+        Double weightKg,
+        ConditioningLevel conditioningLevel,
+        Integer paceAvgSeg,
+        Double weeklyMileageKm
+    ) {
         log.info("[UserProfileService] Atualizando perfil do usuário: {}", userId);
 
         UserProfile profile = userProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Perfil não encontrado para o usuário: " + userId));
 
-        ConditioningLevel effectiveLevel = dto.getConditioningLevel() != null
-                ? dto.getConditioningLevel() : profile.getConditioningLevel();
-        Integer effectivePace = dto.getPaceAvgSeg() != null
-                ? dto.getPaceAvgSeg() : profile.getPaceAvgSeg();
+        ConditioningLevel effectiveLevel = conditioningLevel != null
+                ? conditioningLevel : profile.getConditioningLevel();
+        Integer effectivePace = paceAvgSeg != null
+                ? paceAvgSeg : profile.getPaceAvgSeg();
 
         if (effectivePace != null && effectiveLevel != null) {
             validatePaceForConditioningLevel(effectivePace, effectiveLevel);
         }
 
-        if (dto.getGender() != null) {
-            profile.setGender(dto.getGender());
+        if (weightKg != null) {
+            profile.setWeightKg(weightKg);
         }
-        if (dto.getBirthDate() != null) {
-            profile.setBirthDate(dto.getBirthDate());
+        if (conditioningLevel != null) {
+            profile.setConditioningLevel(conditioningLevel);
         }
-        if (dto.getHeightCm() != null) {
-            profile.setHeightCm(dto.getHeightCm());
+        if (paceAvgSeg != null) {
+            profile.setPaceAvgSeg(paceAvgSeg);
         }
-        if (dto.getWeightKg() != null) {
-            profile.setWeightKg(dto.getWeightKg());
-        }
-        if (dto.getConditioningLevel() != null) {
-            profile.setConditioningLevel(dto.getConditioningLevel());
-        }
-        if (dto.getPaceAvgSeg() != null) {
-            profile.setPaceAvgSeg(dto.getPaceAvgSeg());
-        }
-        if (dto.getWeeklyMileageKm() != null) {
-            profile.setWeeklyMileageKm(dto.getWeeklyMileageKm());
+        if (weeklyMileageKm != null) {
+            profile.setWeeklyMileageKm(weeklyMileageKm);
         }
 
         UserProfile updatedProfile = userProfileRepository.save(profile);
